@@ -100,3 +100,15 @@ def server():
     except socket.error as e:
         print(f'Bind failed. Error: {e}')
         sys.exit()
+ # Listen for incoming connections
+    s.listen(1)
+    print('Socket now listening.')
+
+    # Accept a connection
+    conn, addr = s.accept()
+    print(f'Connected with {addr}')
+
+    # Initial message exchange
+    data = conn.recv(50)
+    print(data.decode())
+    conn.send("chat_reply".encode())
