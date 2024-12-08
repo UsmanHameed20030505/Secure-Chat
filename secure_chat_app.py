@@ -135,3 +135,31 @@ data = conn.recv(50).decode()
             s.close()
             return
         conn.send(message.encode())
+ # Chat loop
+    while True:
+        data = conn.recv(50).decode('UTF-8')
+        if data == "chat_close":
+            break
+        print("Message from Alice: " + data)
+        
+        message = input("Enter Your Message: ")
+        if message == "chat_close":
+            conn.send(message.encode())
+            break
+        conn.send(message.encode())
+
+    conn.close()
+    s.close()
+
+# Parse the command-line argument to decide whether to run as client or server
+if len(sys.argv) != 2:
+    print("Usage: python script.py -s (server) or -c (client)")
+    sys.exit()
+
+choice = sys.argv[1]
+if choice == "-s":
+    server()
+elif choice == "-c":
+    client()
+else:
+    print("Invalid choice. Use -s for server or -c for client.")
