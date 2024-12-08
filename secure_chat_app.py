@@ -112,3 +112,26 @@ def server():
     data = conn.recv(50)
     print(data.decode())
     conn.send("chat_reply".encode())
+data = conn.recv(50).decode()
+    if data == "chat_STARTTLS":
+        print('STARTTLS request received.')
+        conn.send("chat_STARTTLS_ACK".encode())
+
+        # Wrap the connection with SSL/TLS
+        conn = ssl.wrap_socket(conn, 
+                               keyfile="/root/bob-private-key.pem", 
+                               certfile="/root/bob.crt", 
+                               ca_certs="/root/root.crt", 
+                               server_side=True, 
+                               cert_reqs=ssl.CERT_REQUIRED, 
+                               ssl_version=ssl.PROTOCOL_TLS)
+        print('TLS handshake completed.')
+    else:
+        print("Message from Alice: " + data)
+        message = input("Enter Your Message: ")
+        if message == "chat_close":
+            conn.send(message.encode())
+            conn.close()
+            s.close()
+            return
+        conn.send(message.encode())
