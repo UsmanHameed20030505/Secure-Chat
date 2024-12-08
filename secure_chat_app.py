@@ -55,3 +55,48 @@ def client():
         print(f'Error during communication: {e}')
         s.close()
         sys.exit()
+ # Chat loop
+    while True:
+        message = input("Enter Your Message: ")
+        if message == "chat_close":
+            s.send(message.encode())
+            break
+        
+        s.send(message.encode())
+        data = s.recv(100)
+        data = data.decode()
+        if data == "chat_close":
+            print("Message from Bob: " + data)
+            break
+        print("Message from Bob: " + data)
+
+    s.close()
+
+# Define the server function
+# This function is executed when the user chooses to act as a server (-s option)
+def server():
+    port = 5006  # Port number to listen on
+    host = "bob1"  # Server's hostname
+
+    # Create a socket
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        print('Server socket created.')
+    except socket.error as e:
+        print(f'Error creating socket: {e}')
+        sys.exit()
+
+    # Resolve the IP address of the host
+    try:
+        remote_ip = socket.gethostbyname(host)
+    except socket.gaierror:
+        print('Could not resolve hostname')
+        sys.exit()
+
+    # Bind the socket to the port
+    try:
+        s.bind((remote_ip, port))
+        print('Socket bind complete.')
+    except socket.error as e:
+        print(f'Bind failed. Error: {e}')
+        sys.exit()
